@@ -1,0 +1,403 @@
+<p-toast></p-toast>
+
+<ng-container *ngIf="orderList$ | async as orderList">
+  <div class="card">
+    <p-toolbar
+      styleClass="mb-4"
+      *ngIf="(authS.user$ | async)?.role === 'admin'"
+    >
+      <ng-template pTemplate="left">
+        <button
+          pButton
+          pRipple
+          label="New"
+          icon="pi pi-plus"
+          class="p-button-success mr-2"
+          (click)="openNew()"
+        ></button>
+        <button
+          pButton
+          pRipple
+          label="Delete"
+          icon="pi pi-trash"
+          class="p-button-danger"
+          (click)="deleteSelectedOrders()"
+          [disabled]="!selectedOrders || !selectedOrders.length"
+        ></button>
+      </ng-template>
+    </p-toolbar>
+
+    <p-table
+      #dt
+      [value]="orderList"
+      [rows]="10"
+      [paginator]="true"
+      [globalFilterFields]="['id', 'sender']"
+      [(selection)]="selectedOrders"
+      [rowHover]="true"
+      dataKey="id"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+      [showCurrentPageReport]="true"
+    >
+      <ng-template pTemplate="caption">
+        <div class="p-d-flex p-ai-center p-jc-between">
+          <h5 class="p-m-0">Manage Orders</h5>
+          <span class="p-input-icon-left">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              (input)="dt.filterGlobal($any($event).target.value, 'contains')"
+              placeholder="Search..."
+            />
+          </span>
+        </div>
+      </ng-template>
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 3rem">
+            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+          </th>
+          <th pSortableColumn="id">ID<p-sortIcon field="id"></p-sortIcon></th>
+          <th pSortableColumn="profit">
+            Profit<p-sortIcon field="profit"></p-sortIcon>
+          </th>
+          <th pColumn="store">Store</th>
+          <th pColumn="sender">Sender</th>
+          <th pColumn="receiver">Receiver</th>
+          <th></th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-order>
+        <tr>
+          <td>
+            <p-tableCheckbox [value]="order"></p-tableCheckbox>
+          </td>
+          <td>{{ order.id }}</td>
+          <td>{{ order.profit }} €</td>
+          <td>{{ order.storeProduct }}</td>
+          <td>{{ order.sender_info.name }}</td>
+          <td>{{ order.receiver_info.name }}</td>
+
+          <td>
+            <button
+              pButton
+              pRipple
+              icon="pi pi-info"
+              class="p-button-rounded p-button-info mr-2"
+              (click)="showOrder(order)"
+            ></button>
+            <ng-container *ngIf="(authS.user$ | async)?.role === 'admin'">
+              <button
+                pButton
+                pRipple
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-success mr-2"
+                (click)="editOrder(order)"
+              ></button>
+              <button
+                pButton
+                pRipple
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-warning"
+                (click)="deleteOrder(order)"
+              ></button>
+            </ng-container>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="summary">
+        <div class="p-d-flex p-ai-center p-jc-between">
+          In total there are {{ orderList ? orderList.length : 0 }} orders.
+        </div>
+      </ng-template>
+    </p-table>
+  </div>
+</ng-container>
+
+<p-dialog
+  [(visible)]="showOrderDialog"
+  [style]="{ maxWidth: '90%' }"
+  header="Order Details"
+  [modal]="true"
+  styleClass="p-fluid"
+>
+  <ng-template pTemplate="content">
+    <div class="card-container">
+      <p-card header="General">
+        <div class="general-card-content">
+          <div>
+            <label for="id">ID</label>
+            <input
+              id="id"
+              name="id"
+              [(ngModel)]="order.id"
+              pInputText
+              type="text"
+              disabled
+              required
+            />
+          </div>
+          <div>
+            <label for="profit">Profit</label>
+            <p-inputNumber
+              [(ngModel)]="order.profit"
+              [showButtons]="true"
+              mode="currency"
+              currency="EUR"
+              mode="decimal"
+              suffix=" €"
+              [disabled]="onlyInfo"
+            ></p-inputNumber>
+          </div>
+          <p-checkbox
+            label="Breakable"
+            name="breakable"
+            [binary]="true"
+            [(ngModel)]="order.is_breakable"
+            [disabled]="onlyInfo"
+          ></p-checkbox>
+          <p-checkbox
+            label="Perishable"
+            name="perishable"
+            [binary]="true"
+            [(ngModel)]="order.is_perishable"
+            [disabled]="onlyInfo"
+          ></p-checkbox>
+          <p-checkbox
+            label="Store Package"
+            name="store_package"
+            [binary]="true"
+            [(ngModel)]="order.store_package"
+            [disabled]="onlyInfo"
+          ></p-checkbox>
+        </div>
+      </p-card>
+
+      <p-card header="Size">
+        <div class="size-card-content">
+          <div>
+            <label for="length">Length</label>
+            <p-inputNumber
+              id="length"
+              [(ngModel)]="order.x_in_mm"
+              mode="decimal"
+              suffix=" mm"
+              [disabled]="onlyInfo"
+              [showButtons]="!onlyInfo"
+              buttonLayout="vertical"
+              spinnerMode="vertical"
+              decrementButtonClass="p-button-secondary"
+              incrementButtonClass="p-button-secondary"
+              incrementButtonIcon="pi pi-plus"
+              decrementButtonIcon="pi pi-minus"
+            ></p-inputNumber>
+          </div>
+
+          <div>
+            <label for="width">Width</label>
+            <p-inputNumber
+              id="width"
+              [(ngModel)]="order.y_in_mm"
+              mode="decimal"
+              suffix=" mm"
+              [disabled]="onlyInfo"
+              [showButtons]="!onlyInfo"
+              buttonLayout="vertical"
+              spinnerMode="vertical"
+              decrementButtonClass="p-button-secondary"
+              incrementButtonClass="p-button-secondary"
+              incrementButtonIcon="pi pi-plus"
+              decrementButtonIcon="pi pi-minus"
+            ></p-inputNumber>
+          </div>
+
+          <div>
+            <label for="height">Height</label>
+            <p-inputNumber
+              id="height"
+              [(ngModel)]="order.z_in_mm"
+              mode="decimal"
+              suffix=" mm"
+              [disabled]="onlyInfo"
+              [showButtons]="!onlyInfo"
+              buttonLayout="vertical"
+              spinnerMode="vertical"
+              decrementButtonClass="p-button-secondary"
+              incrementButtonClass="p-button-secondary"
+              incrementButtonIcon="pi pi-plus"
+              decrementButtonIcon="pi pi-minus"
+            ></p-inputNumber>
+          </div>
+        </div>
+      </p-card>
+
+      <p-card header="Sender">
+        <div class="wrapper">
+          <label for="name">Name</label>
+          <input
+            id="name"
+            name="name"
+            [(ngModel)]="order.sender_info.name"
+            pInputText
+            type="text"
+            [disabled]="onlyInfo"
+            required
+          />
+        </div>
+
+        <div class="wrapper">
+          <label for="street_and_number">Street and Number</label>
+          <input
+            id="street_and_number"
+            name="street_and_number"
+            [(ngModel)]="order.sender_info.street_and_number"
+            pInputText
+            type="text"
+            [disabled]="onlyInfo"
+            required
+          />
+        </div>
+
+        <div class="wrapper">
+          <label for="zipcode">Zipcode</label>
+          <input
+            id="zipcode"
+            name="zipcode"
+            [(ngModel)]="order.sender_info.zipcode"
+            pInputText
+            type="text"
+            [disabled]="onlyInfo"
+            required
+          />
+        </div>
+
+        <div class="wrapper">
+          <label for="city">City</label>
+          <input
+            id="city"
+            name="city"
+            [(ngModel)]="order.sender_info.city"
+            pInputText
+            type="text"
+            [disabled]="onlyInfo"
+            required
+          />
+        </div>
+
+        <div class="wrapper">
+          <label for="country">Country</label>
+          <input
+            id="country"
+            name="country"
+            [(ngModel)]="order.sender_info.country"
+            pInputText
+            type="text"
+            [disabled]="onlyInfo"
+            required
+          />
+        </div>
+      </p-card>
+
+      <p-card header="Receiver">
+        <div class="wrapper">
+          <label for="name">Name</label>
+          <input
+            id="name"
+            name="name"
+            [(ngModel)]="order.receiver_info.name"
+            pInputText
+            type="text"
+            [disabled]="onlyInfo"
+            required
+          />
+        </div>
+
+        <div class="wrapper">
+          <label for="street_and_number">Street and Number</label>
+          <input
+            id="street_and_number"
+            name="street_and_number"
+            [(ngModel)]="order.receiver_info.street_and_number"
+            pInputText
+            type="text"
+            [disabled]="onlyInfo"
+            required
+          />
+        </div>
+
+        <div class="wrapper">
+          <label for="zipcode">Zipcode</label>
+          <input
+            id="zipcode"
+            name="zipcode"
+            [(ngModel)]="order.receiver_info.zipcode"
+            pInputText
+            type="text"
+            [disabled]="onlyInfo"
+            required
+          />
+        </div>
+
+        <div class="wrapper">
+          <label for="city">City</label>
+          <input
+            id="city"
+            name="city"
+            [(ngModel)]="order.receiver_info.city"
+            pInputText
+            type="text"
+            [disabled]="onlyInfo"
+            required
+          />
+        </div>
+
+        <div class="wrapper">
+          <label for="country">Country</label>
+          <input
+            id="country"
+            name="country"
+            [(ngModel)]="order.receiver_info.country"
+            pInputText
+            type="text"
+            [disabled]="onlyInfo"
+            required
+          />
+        </div>
+      </p-card>
+    </div>
+
+    <app-gmaps [order]="order"></app-gmaps>
+  </ng-template>
+
+  <ng-template pTemplate="footer">
+    <button
+      *ngIf="onlyInfo"
+      pButton
+      pRipple
+      label="Ok"
+      class="p-button-text"
+      (click)="showOrderDialog = false"
+    ></button>
+    <ng-container *ngIf="!onlyInfo">
+      <button
+        pButton
+        pRipple
+        label="Cancel"
+        icon="pi pi-times"
+        class="p-button-text"
+        (click)="showOrderDialog = false"
+      ></button>
+      <button
+        pButton
+        pRipple
+        label="Save"
+        icon="pi pi-check"
+        class="p-button-text"
+        (click)="saveOrder(order)"
+      ></button>
+    </ng-container>
+  </ng-template>
+</p-dialog>
+
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>

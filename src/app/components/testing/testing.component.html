@@ -1,0 +1,45 @@
+<p>open console please</p>
+<hr />
+<p-button (click)="setPasdOrderList()">
+  GET https://pasd-webshop-api.onrender.com/api/order
+</p-button>
+<p>result: {{ pasdOrderList$ | async | json }}</p>
+<hr />
+<p-button (click)="setTestList()">
+  GET
+  https://delivery-app-5c39d-default-rtdb.europe-west1.firebasedatabase.app/test-list.json
+</p-button>
+<p>result: {{ testList$ | async | json }}</p>
+<hr />
+<p-button (click)="sendTestEntry()">
+  POST
+  https://delivery-app-5c39d-default-rtdb.europe-west1.firebasedatabase.app/test-list.json
+</p-button>
+<p>body: {{ testEntry | json }}</p>
+<hr />
+<p-button (click)="putTestEntry()">
+  PUT
+  https://delivery-app-5c39d-default-rtdb.europe-west1.firebasedatabase.app/test-list/id.json
+</p-button>
+<p>
+  <input type="text" pInputText [(ngModel)]="putId" placeholder="Id to put" />
+</p>
+<p>body: {{ testEntryPut | json }}</p>
+<hr />
+<p-button (click)="deleteTestList()">
+  DELETE ALL
+  https://delivery-app-5c39d-default-rtdb.europe-west1.firebasedatabase.app/test-list.json
+</p-button>
+<hr />
+<p-button (click)="deleteTestEntry()">
+  DELETE ONE
+  https://delivery-app-5c39d-default-rtdb.europe-west1.firebasedatabase.app/test-list/id.json
+</p-button>
+<p>
+  <input
+    type="text"
+    pInputText
+    [(ngModel)]="deleteId"
+    placeholder="Id to delete"
+  />
+</p>

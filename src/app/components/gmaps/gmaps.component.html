@@ -1,0 +1,103 @@
+<p-toast [style]="{ marginTop: '80px' }"></p-toast>
+
+<p-gmap
+  #gmap
+  [style]="{ width: '100%', height: '320px', 'margin-bottom': '1em' }"
+  [options]="options"
+  [overlays]="overlays"
+  (onMapReady)="map = $event.map"
+  (onMapClick)="handleMapClick($event)"
+  (onOverlayClick)="handleOverlayClick($event)"
+  (onOverlayDragEnd)="handleDragEnd($event)"
+></p-gmap>
+
+<div class="buttons">
+  <button
+    [style]="{ width: 'fit-content' }"
+    type="button"
+    pButton
+    label="Calculate Route"
+    icon="pi pi-directions"
+    (click)="calcRoute()"
+  ></button>
+ <!--  <button
+    [style]="{ width: 'fit-content', marginRight: '1rem' }"
+    type="button"
+    pButton
+    label="Clear"
+    icon="pi pi-times"
+    (click)="clear()"
+  ></button>
+  <button
+    [style]="{ width: 'fit-content', marginLeft: '1rem' }"
+    type="button"
+    pButton
+    label="Zoom In"
+    icon="pi pi-plus"
+    (click)="zoomIn(gmap.getMap())"
+  ></button>
+  <button
+    [style]="{ width: 'fit-content', marginLeft: '1rem' }"
+    type="button"
+    pButton
+    label="Zoom Out"
+    icon="pi pi-minus"
+    (click)="zoomOut(gmap.getMap())"
+  ></button> -->
+</div>
+
+<p-dialog
+  showEffect="fade"
+  [(visible)]="dialogVisible"
+  header="New Location"
+  [style]="{ width: '300px' }"
+>
+  <div class="grid p-fluid" *ngIf="selectedPosition">
+    <div class="col-2"><label for="title">Label</label></div>
+    <div class="col-10">
+      <input type="text" pInputText id="title" [(ngModel)]="markerTitle" />
+    </div>
+
+    <div class="col-2"><label for="lat">Lat</label></div>
+    <div class="col-10">
+      <input
+        id="lat"
+        type="text"
+        readonly
+        pInputText
+        [ngModel]="selectedPosition.lat()"
+      />
+    </div>
+
+    <div class="col-2"><label for="lng">Lng</label></div>
+    <div class="col-10">
+      <input
+        id="lng"
+        type="text"
+        readonly
+        pInputText
+        [ngModel]="selectedPosition.lng()"
+      />
+    </div>
+
+    <div class="col-2"><label for="drg">Drag</label></div>
+    <div class="col-10">
+      <p-checkbox
+        [(ngModel)]="draggable"
+        [binary]="true"
+        [style]="{ 'margin-top': '.25em' }"
+      ></p-checkbox>
+    </div>
+  </div>
+  <ng-template pTemplate="footer">
+    <div>
+      <button
+        type="button"
+        pButton
+        label="Add Marker"
+        icon="pi-plus"
+        (click)="addMarker()"
+      ></button>
+    </div>
+  </ng-template>
+</p-dialog>
